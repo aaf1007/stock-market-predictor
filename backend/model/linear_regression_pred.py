@@ -37,7 +37,7 @@ def predict_price(ticker_symbol, days_ahead=1) -> float:
     # Test the model
     y_pred = model.predict(X_test)
 
-    # Calculate the mean squared error
+    # Calculate the mean squared error and root mean squared error
     mse = mean_squared_error(y_test, y_pred)
     rmse = root_mean_squared_error(y_test, y_pred)
 
@@ -54,4 +54,11 @@ def predict_price(ticker_symbol, days_ahead=1) -> float:
     return round(ret_prediction[0], 2)
 
 
+def getLastPrice(ticker_symbol) -> float:
+    stock_symbol = ticker_symbol
+    stock_data = yf.Ticker(stock_symbol)
 
+    # Fetch price data for training the model
+    price = stock_data.history(period="1d") # gets 1 day of data
+
+    return round(price["Close"].iloc[-1], 2), price.index[-1].date()

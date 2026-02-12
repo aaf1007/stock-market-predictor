@@ -28,8 +28,11 @@ def main():
                     stock_symbol = input("Enter stock symbol or name (e.g. AAPL or Apple): ")
 
                 prediction = linear_regression_pred.predict_price(stock_symbol)
+                
+                cur_price, last_date = linear_regression_pred.getLastPrice(stock_symbol)
 
-                print(f"\nPrediction for {stock_symbol}: {prediction}")
+                print(f"\nCurrent price for {stock_symbol} on {last_date}: {cur_price}")
+                print(f"\n1-Day prediction for {stock_symbol}: {prediction}")
 
             case "2":
                 get_popular_stocks()
@@ -38,7 +41,7 @@ def main():
                 exit()
             case _:
                 print("Invalid choice")
-                main()
+                continue
 
         print("\n")
 
