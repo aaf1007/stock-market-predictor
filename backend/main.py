@@ -27,12 +27,14 @@ def main():
                     # Stock symbol / Ticker is invalid
                     stock_symbol = input("Enter stock symbol or name (e.g. AAPL or Apple): ")
 
-                prediction = linear_regression_pred.predict_price(stock_symbol)
+                prediction, mse = linear_regression_pred.predict_price(stock_symbol)
                 
-                cur_price, last_date = linear_regression_pred.getLastPrice(stock_symbol)
+                cur_price, last_date = linear_regression_pred.get_last_price(stock_symbol)
 
                 print(f"\nCurrent price for {stock_symbol} on {last_date}: {cur_price}")
-                print(f"\n1-Day prediction for {stock_symbol}: {prediction}")
+                print(f"1-Day prediction for {stock_symbol}: {prediction}")
+                print(f"Model MSE: {mse}")
+                
 
             case "2":
                 get_popular_stocks()
