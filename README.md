@@ -1,120 +1,92 @@
 # Stock Market Predictor
 
-This project is a simple cli stock price prediction tool that uses **linear regression** on historical stock data.  
-It currently focuses on predicting the next-day closing price for a given stock using features such as:
+CLI-based stock prediction project using `yfinance` + `scikit-learn`.
 
-- Close price
-- Volume
-- 60-day moving average
-- 60-day rolling standard deviation
+The current backend architecture trains and stores **one linear-regression model per ticker** using `backend/model/train/linear_regression_factory.py`. Models are cached as `.joblib` files and loaded on demand by `backend/main.py`.
 
-The core model lives in `backend/model/linear_regression_pred.py`.
+## Current Model Design
 
----
-
-## Features
-
-- **Data source**: Fetches historical stock data via `yfinance`.
-- **Feature engineering**:
-  - 60-day moving average of close price
-  - 60-day rolling standard deviation of close price
-- **Model**: Linear Regression (`scikit-learn`)
-- **Metrics**:
-  - Mean Squared Error (MSE)
-  - Root Mean Squared Error (RMSE)
-
----
+- Model type: `LinearRegression` inside a `Pipeline(StandardScaler -> LinearRegression)`
+- Data source: `yfinance`
+- Forecast target: next-day close (`Close[t+1]`)
+- Features:
+  - `Close`
+  - `Volume`
+  - `Moving_Average` (20-day rolling mean)
+  - `Volatility` (20-day rolling std)
+- Validation: `TimeSeriesSplit`
+- Stored artifact per ticker: `backend/model/<TICKER>.joblib`
 
 ## Project Structure
 
 ```text
 backend/
-  requirements.txt        # Python dependencies
+  main.py                               # CLI app
+  requirements.txt
   model/
-    linear_regression_pred.py  # Training & evaluation script
-    stock_info.json            # (Reserved for stock-related metadata, if needed)
+    AAPL.joblib                         # Example trained model artifact
+    T.TO.joblib                         # Example trained model artifact
+    train/
+      linear_regression_factory.py      # Per-ticker training + persistence
+      linear_regression_pred.py         # Older/general training script
+      ticker_universe.tsv
+      stock_info.json
 ```
 
----
-
-## Getting Started
-
-### 1. Prerequisites
-
-- Python 3.12 (recommended)
-- `pip` or `pipx` (for installing dependencies)
-- (Optional) `virtualenv` or `pyenv` for virtual environments
-
-### 2. Setup Environment
-
-From the `backend` directory:
+## Setup
 
 ```bash
 cd backend
-
-# Create and activate virtual environment (recommended)
 python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
-
-### 3. Install Dependencies
-
-```bash
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
----
+## Run
 
-## Usage
-
-### Run the Linear Regression Script
-
-From the `backend` directory:
+From `backend/`:
 
 ```bash
-python model/linear_regression_pred.py
+python main.py
 ```
 
-This will:
+CLI menu:
 
-1. Create features:
-   - `Close`
-   - `Volume`
-   - `Moving_Average_60`
-   - `Rolling_STD_60`
-2. Split the data into training and test sets (80% / 20%).
-3. Train a `LinearRegression` model.
-4. Compute and print:
-   - Features used
-   - Mean Squared Error
-   - Root Mean Squared Error
+1. Predict stock price
+2. Get popular stocks
+3. Exit
 
----
+If a ticker model does not exist yet, the app trains it first via the factory and then saves it under `backend/model/`.
 
-## Requirements
+## Performance Snapshot
 
-From `backend/requirements.txt`:
+Metrics below are read from current saved artifacts in this repo (`backend/model/*.joblib`).  
+Metric definition in the factory is based on **next-day return error** computed from predicted vs actual close.
 
-- `yfinance`
-- `streamlit`
-- `scikit-learn`
+| Ticker | MSE | RMSE | RMSE (%) |
+|---|---:|---:|---:|
+| `AAPL` | 0.0005352936 | 0.0209927145 | 2.099% |
+| `T.TO` | 0.0001424114 | 0.0117423143 | 1.174% |
+| **Average (2 models)** | **0.0003388525** | **0.0163675144** | **1.637%** |
 
-Install them via:
+## Pros and Cons (Current Approach)
 
-```bash
-pip install -r backend/requirements.txt
-```
+### Pros
 
----
+- Simple and fast to train/infer.
+- Per-ticker model storage makes repeated predictions efficient.
+- Time-series-aware split avoids random-shuffle leakage.
+- Pipeline keeps preprocessing consistent with training.
 
-## Future Improvements (Ideas)
+### Cons
 
-- Wrap the model in a **FastAPI** or **Streamlit** app for a simple UI.
-- Add support for:
-  - Multiple tickers and batch runs.
-  - Hyperparameter tuning and cross-validation.
-  - Additional technical indicators as features.
-- Persist trained models and metrics.
-- Add unit tests and CI.
+- Linear model can underfit non-linear market behavior.
+- Feature set is small (only price/volume + 2 rolling stats).
+- Limited robustness to market regime shifts and sudden events.
+- Metrics are from short local samples unless you retrain broadly.
+- No confidence intervals, only point predictions.
 
+## Improvements
+
+See `MODEL_IMPROVEMENTS.md` for a prioritized improvement roadmap.
 

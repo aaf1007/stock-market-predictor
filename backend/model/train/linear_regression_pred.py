@@ -16,7 +16,7 @@ def predict_price(ticker_symbol: str, days_ahead: int = 1, period_num: int = 60,
     training_stocks = df["ticker"].dropna().tolist()
 
     stocks = build_data_set(training_stocks, days_ahead, period_num, max_period)
-    stocks.to_csv("current_data_set_sample.tsv", sep='\t', index=False)
+    
     # Error Handling: empty dataset
     if stocks.empty:
         raise ValueError("Data set is empty")
