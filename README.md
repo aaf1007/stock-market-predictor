@@ -69,24 +69,3 @@ Metric definition in the factory is based on **next-day return error** computed 
 | `T.TO` | 0.0001424114 | 0.0117423143 | 1.174% |
 | **Average (2 models)** | **0.0003388525** | **0.0163675144** | **1.637%** |
 
-## Pros and Cons (Current Approach)
-
-### Pros
-
-- Simple and fast to train/infer.
-- Per-ticker model storage makes repeated predictions efficient.
-- Time-series-aware split avoids random-shuffle leakage.
-- Pipeline keeps preprocessing consistent with training.
-
-### Cons
-
-- Linear model can underfit non-linear market behavior.
-- Feature set is small (only price/volume + 2 rolling stats).
-- Limited robustness to market regime shifts and sudden events.
-- Metrics are from short local samples unless you retrain broadly.
-- No confidence intervals, only point predictions.
-
-## Improvements
-
-See `MODEL_IMPROVEMENTS.md` for a prioritized improvement roadmap.
-
