@@ -5,31 +5,58 @@ import joblib
 
 POPULAR_STOCKS = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "BRK-B", "JPM", "V"]
 
+
+class C:
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+    CYAN = "\033[38;5;153m"     # pastel sky
+    BLUE = "\033[38;5;147m"     # pastel lavender
+    GREEN = "\033[38;5;121m"    # pastel mint
+    YELLOW = "\033[38;5;223m"   # pastel peach
+    RED = "\033[38;5;217m"      # pastel rose
+    MAGENTA = "\033[38;5;183m"  # pastel lilac
+
+
+def style(text: str, color: str) -> str:
+    return f"{color}{text}{C.RESET}"
+
+
+def print_header():
+    width = 54
+    print(style(f"╔{'═' * width}╗", C.BLUE))
+    print(style(f"║{'Welcome'.center(width)}║", C.MAGENTA))
+    print(style(f"║{'Stock Market Predictor'.center(width)}║", C.BOLD + C.CYAN))
+    print(style(f"║{'Command-line interface'.center(width)}║", C.GREEN))
+    print(style(f"╚{'═' * width}╝", C.BLUE))
+    print()
+
 def get_popular_stocks():
     """Display popular stocks with their names."""
+    print(style("Popular Stocks", C.BOLD + C.CYAN))
     for i, ticker in enumerate(POPULAR_STOCKS):
-        print(f"{i+1}.) {ticker} - {yf.Ticker(ticker).info.get('longName')}")
+        print(f"{style(f'{i+1}.) {ticker}', C.YELLOW)} - {yf.Ticker(ticker).info.get('longName')}")
     
 def main():
-    print("Stock Price Predictor")
-    print("=====================")
+    print_header()
 
     while True:
-        print("1. Predict Stock Price")
-        print("2. Get Popular Stocks")
-        print("3. Exit")
-        print("=====================")
-        choice = input("Enter your choice: ")
+        print(style("======================", C.BLUE))
+        print(style("1. Predict Stock Price", C.GREEN))
+        print(style("2. Get Popular Stocks", C.GREEN))
+        print(style("3. Exit", C.GREEN))
+        print(style("======================", C.BLUE))
+        choice = input(style("Enter your choice: ", C.YELLOW))
         match choice:
             case "1":
             # Ask for stock symbol
-                stock_symbol = input("Enter stock symbol or name (e.g. AAPL or Apple): ").upper()
+                stock_symbol = input(style("Enter stock/ticker symbol(e.g. AAPL or META): ", C.YELLOW)).upper()
 
                 ticker = yf.Ticker(stock_symbol) # Ticker object
 
                 while (yf.Ticker(stock_symbol).info.get("regularMarketPrice") is None):
                     # Stock symbol / Ticker is invalid
-                    stock_symbol = input("Enter stock symbol or name (e.g. AAPL or Apple): ").upper()
+                    print(style("Invalid ticker. Try again.", C.RED))
+                    stock_symbol = input(style("Enter stock symbol or name (e.g. AAPL or Apple): ", C.YELLOW)).upper()
                     ticker = yf.Ticker(stock_symbol)
 
                 # Path for joblib file
@@ -38,7 +65,10 @@ def main():
                 # If model is not live then create
                 if not model_path.exists():
                     train = factory.make_model(stock_symbol)
-                    print(f"Is training? {train}")
+                    if train:
+                        print(style("Model currently training...", C.MAGENTA))
+                else:
+                    print(style("Model loaded.", C.MAGENTA))
 
                 job = joblib.load(model_path)
                 model = job["pipeline"]
@@ -62,23 +92,28 @@ def main():
                 net_change = float(future_pred - pred[-2])
                 stock_return = float((net_change / pred[-2]) * 100)
 
-                print(f"Predicted Price: {future_pred:.2f} | " + 
-                    f"Change: ${net_change:.2f} | " +
-                    f"Return: {stock_return:.2f}% | " +
-                    f"Model MSE: {mse:.5f} | " +
-                    f"Model RMSE: {rmse*100:.3f}%"
-                    )
-
+                print(
+                    style(f"Predicted Price: {future_pred:.2f}", C.CYAN)
+                    + " | "
+                    + style(f"Change: ${net_change:.2f}", C.YELLOW)
+                    + " | "
+                    + style(f"Return: {stock_return:.2f}%", C.GREEN)
+                    + " | "
+                    + style(f"Model MSE: {mse:.5f}", C.BLUE)
+                    + " | "
+                    + style(f"Model RMSE: {rmse*100:.3f}%", C.MAGENTA)
+                    + "\n"
+                )
 
             case "2":
                 get_popular_stocks()
             case "3":
-                print('Thank you!')
+                print(style('Thank you!', C.CYAN))
                 exit()
             case _:
-                print("Invalid choice")
+                print(style("Invalid choice", C.RED))
                 continue
 
-        print("\n")
 
-main()
+if __name__ == "__main__":
+    main()
